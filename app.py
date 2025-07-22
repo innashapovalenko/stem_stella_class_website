@@ -6,7 +6,8 @@ import graphs # Assuming you have this file in the same directory
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
-app.secret_key = 'my_secret_key_here' # Needed for flashing messages
+# app.secret_key = 'my_secret_key_here' # Needed for flashing messages
+app.secret_key = os.environ.get('SECRET_KEY', 'default_secret_key_for_dev')
 
 # Global storage for uploaded file paths and data points
 data_storage = {
@@ -207,4 +208,4 @@ def get_data(device):
 
 if __name__ == '__main__':
     os.makedirs('uploads', exist_ok=True)
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=os.environ.get('PORT', 5000))
