@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STELLA Data Viewer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for better aesthetics */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .form-label {
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 6px;
+            display: block;
+            flex-shrink: 0; /* Prevent label from shrinking in flex container */
+            min-width: 120px; /* Give labels a consistent width */
+        }
+        .form-input, .form-select {
+            flex-grow: 1; /* Allow input to take remaining space */
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+            min-width: 0; /* Allow input to shrink if necessary */
+        }
+        /* Flex container for horizontal inputs */
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px; /* Space between label and input */
+            margin-bottom: 15px;
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+        }
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+        .btn-primary {
+            background-color: #4f46e5;
+            color: white;
+            border: none;
+        }
+        .btn-primary:hover {
+            background-color: #4338ca;
+            transform: translateY(-1px);
+        }
+        .btn-secondary {
+            background-color: #4f46e5;
+            color: white;
+            border: none;
+        }
+        .btn-secondary:hover {
+            background-color: #4338ca;
+            transform: translateY(-1px);
+        }
+        .btn-outline {
+            background-color: transparent;
+            color: #4f46e5;
+            border: 1px solid #4f46e5;
+        }
+        .btn-outline:hover {
+            background-color: #eef2ff;
+        }
+        /* Table specific styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            overflow-x: auto; /* Allow horizontal scrolling for wide tables */
+            display: block; /* Make table a block element for overflow */
+        }
+        th, td {
+            text-align: left;
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+            white-space: nowrap; /* Prevent text wrapping in cells */
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tbody tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        /* Flash message styles */
+        .flash-message {
+            padding: 12px 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            animation: fadeOut 0.5s ease-out 5s forwards; /* Fade out after 5 seconds */
+        }
+        .flash-message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .flash-message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .flash-message.warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+        .flash-message.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .flash-close-btn {
+            background: none;
+            border: none;
+            font-size: 1.2em;
+            cursor: pointer;
+            color: inherit;
+            opacity: 0.7;
+        }
+        .flash-close-btn:hover {
+            opacity: 1;
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-3xl font-bold text-center mb-8 text-indigo-700">STELLA Spectrometer Data Viewer</h1>
+
+        <!-- Flashed Messages Section -->
+        <div id="flash-messages-container">
+            {% for category, message in flashed_messages %}
+            <div class="flash-message {{ category }}">
+                <span>{{ message }}</span>
+                <button class="flash-close-btn" onclick="this.parentElement.style.display='none';">&times;</button>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- STELLA-1.1 Section (Top) -->
+        <div class="column">
+            <h2 class="text-2xl font-semibold text-center mb-6 text-indigo-600">STELLA-1.1</h2>
+
+            <!-- File Upload Form for STELLA-1.1 -->
+            <div class="card">
+                <h3 class="text-xl font-semibold mb-4">Upload Data</h3>
+                <form action="{{ url_for('upload_file', device='stella1') }}" method="post" enctype="multipart/form-data">
+                    <div class="input-group">
+                        <label for="file_stella1" class="form-label">Choose CSV File:</label>
+                        <input type="file" name="file" id="file_stella1" accept=".csv" class="form-input" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-full">Upload File</button>
+                </form>
+            </div>
+
+            <!-- Add Line Parameters Form for STELLA-1.1 -->
+            <div class="card">
+                <h3 class="text-xl font-semibold mb-4">Add Line to Table</h3>
+                <form action="{{ url_for('add_object', device='stella1') }}" method="post">
+                    <div class="input-group">
+                        <label for="date_stella1" class="form-label">Date/Time (YYYY-MM-DD):</label>
+                        <input type="text" name="date" id="date_stella1" class="form-input" placeholder="e.g., 2025-07-14" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="distance_stella1" class="form-label">Distance (cm):</label>
+                        <input type="number" step="any" name="distance" id="distance_stella1" class="form-input" placeholder="e.g., 10.5" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="cal1_stella1" class="form-label">Calibration Batch 1 (cal1):</label>
+                        <input type="number" name="cal1" id="cal1_stella1" class="form-input" placeholder="e.g., 1" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="dp1_stella1" class="form-label">Data Point Batch 1 (dp1):</label>
+                        <input type="number" name="dp1" id="dp1_stella1" class="form-input" placeholder="e.g., 2" required>
+                    </div>
+
+
+                    <div class="input-group">
+                        <label for="dp2_stella1" class="form-label">Data Point Batch 2 (dp2):</label>
+                        <input type="number" name="dp2" id="dp2_stella1" class="form-input" placeholder="e.g., 4" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="cal2_stella1" class="form-label">Calibration Batch 2 (cal2):</label>
+                        <input type="number" name="cal2" id="cal2_stella1" class="form-input" placeholder="e.g., 3" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="line_name_stella1" class="form-label">Line Name:</label>
+                        <input type="text" name="line_name" id="line_name_stella1" class="form-input" placeholder="e.g., Test Run A">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-full mt-4">Add Line to Table</button>
+                </form>
+                <form action="{{ url_for('clear_objects', device='stella1') }}" method="post" class="mt-4">
+                    <button type="submit" class="btn btn-secondary w-full">Clear All Lines</button>
+                </form>
+            </div>
+
+            <!-- STELLA-1.1 Table Display -->
+            <div class="card">
+                <h3 class="text-xl font-semibold mb-4">Data Table</h3>
+                <div id="table_stella1_container">
+                    {{ table1_html | safe }}
+                </div>
+            </div>
+        </div>
+
+        <!-- STELLA-Q2 Section (Bottom) -->
+        <div class="column mt-8"> <!-- Added margin-top for separation -->
+            <h2 class="text-2xl font-semibold text-center mb-6 text-indigo-600">STELLA-Q2</h2>
+
+            <!-- File Upload Form for STELLA-Q2 -->
+            <div class="card">
+                <h3 class="text-xl font-semibold mb-4">Upload Data</h3>
+                <form action="{{ url_for('upload_file', device='stellaq2') }}" method="post" enctype="multipart/form-data">
+                    <div class="input-group">
+                        <label for="file_stellaq2" class="form-label">Choose CSV File:</label>
+                        <input type="file" name="file" id="file_stellaq2" accept=".csv" class="form-input" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-full">Upload File</button>
+                </form>
+            </div>
+
+            <!-- Add Line Parameters Form for STELLA-Q2 -->
+            <div class="card">
+                <h3 class="text-xl font-semibold mb-4">Add Line to Table</h3>
+                <form action="{{ url_for('add_object', device='stellaq2') }}" method="post">
+                    <div class="input-group">
+                        <label for="date_stellaq2" class="form-label">Date/Time (YYYY-MM-DD):</label>
+                        <input type="text" name="date" id="date_stellaq2" class="form-input" placeholder="e.g., 2025-06-13" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="distance_stellaq2" class="form-label">Distance (cm):</label>
+                        <input type="number" step="any" name="distance" id="distance_stellaq2" class="form-input" placeholder="e.g., 10.5" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="cal1_stellaq2" class="form-label">Calibration Batch 1 (cal1):</label>
+                        <input type="number" name="cal1" id="cal1_stellaq2" class="form-input" placeholder="e.g., 1" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="dp1_stellaq2" class="form-label">Data Point Batch 1 (dp1):</label>
+                        <input type="number" name="dp1" id="dp1_stellaq2" class="form-input" placeholder="e.g., 2" required>
+                    </div>
+
+
+                    <div class="input-group">
+                        <label for="dp2_stellaq2" class="form-label">Data Point Batch 2 (dp2):</label>
+                        <input type="number" name="dp2" id="dp2_stellaq2" class="form-input" placeholder="e.g., 4" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="cal2_stellaq2" class="form-label">Calibration Batch 2 (cal2):</label>
+                        <input type="number" name="cal2" id="cal2_stellaq2" class="form-input" placeholder="e.g., 3" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="line_name_stellaq2" class="form-label">Line Name:</label>
+                        <input type="text" name="line_name" id="line_name_stellaq2" class="form-input" placeholder="e.g., Test Run B">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-full mt-4">Add Line to Table</button>
+                </form>
+                <form action="{{ url_for('clear_objects', device='stellaq2') }}" method="post" class="mt-4">
+                    <button type="submit" class="btn btn-secondary w-full">Clear All Lines</button>
+                </form>
+            </div>
+
+            <!-- STELLA-Q2 Table Display -->
+            <div class="card">
+                <h3 class="text-xl font-semibold mb-4">Data Table</h3>
+                <div id="table_stellaq2_container">
+                    {{ table2_html | safe }}
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
